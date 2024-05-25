@@ -1,6 +1,6 @@
 /* Style inputs with type="text", select elements and textareas */
 input[type=text], input[type=email], textarea {
-    width: 100%; /* Full width */
+    width: 50%; /* Full width */
     padding: 12px; /* Some padding */ 
     border: 1px solid #ccc; /* Gray border */
     border-radius: 4px; /* Rounded borders */
@@ -18,6 +18,10 @@ input[type=text], input[type=email], textarea {
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    display: block; /* Make the button a block element */
+    width: -moz-fit-content; /* Ensure the button only takes up as much space as needed */
+    width: fit-content;
+    margin-top: 16px; /* Add a top margin to separate from the textarea */
   }
   
   /* When moving the mouse over the submit button, add a darker green color */

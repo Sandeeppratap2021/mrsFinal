@@ -3,23 +3,8 @@ import pandas as pd
 import pickle
 import requests
 from fuzzywuzzy import process
-from streamlit_modal import Modal
+import speech_recognition as sr
 
-import json
-from streamlit_lottie import st_lottie
-
-# def load_lottieurl(url: str):
-#     r = requests.get(url)
-#     if r.status_code != 200:
-#         return None
-#     return r.json()
-# lottie_hello = load_lottieurl("https://lottie.host/embed/93d1c9c9-931f-45c6-94d0-6d5f3f63f5f4/3V0TBuV3H6.json")
-
-# def load_lottiefile(filepath: str):
-#     with open(filepath, "r") as f:
-#         return json.load(f)
-
-# lottie_coding = load_lottiefile("lottiefiles/coding.json")
 
 def movie_finder(title, all_titles):
         closest_match = process.extractOne(title, all_titles)
@@ -43,29 +28,45 @@ def fetch_poster(title):
         else:
             return None
 
-# def voice_to_text():
-#     recognizer = sr.Recognizer()
+def fetch_trailer(title):
+        # Construct the URL to fetch movie details
+        url = f"https://api.apilayer.com/youtube/{title}?api_key=2lmyWj6yj49vBGJ8R4wjczyOl1v6vZGI&append_to_response=videos"
+        
+        # Make the API request
+        response = requests.get(url)
+        data = response.json()
 
-#     st.info("Please speak the name of a movie into the microphone...")
+        # Check if the 'videos' key is present in the response
+        if 'videos' in data and 'results' in data['videos']:
+            videos = data['videos']['results']
+            
+            # Search for a trailer among the videos
+            for video in videos:
+                # Assuming trailers are of type 'Trailer' and hosted on YouTube
+                if video['type'] == 'Trailer' and 'YouTube' in video['site']:
+                    # Construct the YouTube trailer URL
+                    trailer_key = video['key']
+                    trailer_url = f"https://www.youtube.com/watch?v={trailer_key}"
+                    return trailer_url
 
-#     with sr.Microphone() as source:
-#         recognizer.adjust_for_ambient_noise(source)
-#         audio = recognizer.listen(source, timeout=15)
+        # Return None if no trailer is found
+        return None
 
-#     st.success("Recording complete. Transcribing...")
 
-#     try:
-#         # Use the Google Web Speech API for transcription
-#         text = recognizer.recognize_google(audio)
-#         st.success("Transcription successful:")
-#         st.write(text)
-#         return text
-#     except sr.UnknownValueError:
-#         st.warning("Could not understand audio.")
-#         return None
-#     except sr.RequestError as e:
-#         st.error(f"Error connecting to Google Web Speech API: {e}")
-#         return None
+def voice_to_text():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        st.write("Listening...")
+        audio_data = recognizer.listen(source)
+        st.write("Processing...")
+        try:
+            text = recognizer.recognize_google(audio_data)
+            return text
+        except sr.UnknownValueError:
+            st.error("Sorry, I did not understand the audio.")
+        except sr.RequestError:
+            st.error("Sorry, the service is unavailable.")
+        return ""
 
 
 def recommend(movie):
@@ -86,7 +87,7 @@ def recommend(movie):
         recommend_movie.append(movies.iloc[i[0]].title)
         similarity_score.append(i[1])
         recommend_poster.append(fetch_poster(movies.iloc[i[0]].title))
-        # recommend_trailer.append(fetch_trailer(movies_id))
+        # recommend_trailer.append(fetch_trailer(movies.iloc[i[0]].title))
         recommend_genres.append(movies.iloc[i[0]].genres)
         recommend_tagline.append(movies.iloc[i[0]].tagline)
         recommend_overview.append(movies.iloc[i[0]].overview)
@@ -95,6 +96,7 @@ def recommend(movie):
 
     return recommend_movie, similarity_score,  recommend_poster, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
     # return recommend_movie, similarity_score,  recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
+    # return recommend_movie, similarity_score,  recommend_poster, recommend_trailer, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
 
 # movies = pickle.load(open("movies_list.pkl", 'rb'))
 movies = pd.read_pickle("movies_list.pkl")
@@ -103,21 +105,50 @@ movies_list=movies['title'].values
 
 def app():
 
-    st.title("Movie Recommender System")
-    # st_lottie(
-    #     lottie_coding,
-    #     speed=1,
-    #     reverse=False,
-    #     loop=True,
-    #     quality="low",
-    #     height=200,
-    #     width= 200,
-        
-    #     key=None,
-    # )
+    st.title("Movie Recommendation System")
+
     # Search movie option
-    user_input = st.text_input("Search for a movie:")
-    if user_input:
+    st.markdown(
+        """
+        <style>
+            [data-testid="baseButton-secondary"] {
+                # color: white;
+                background-color: transparent;
+                border: solid;
+                border-radius: 25px;
+                # border-bottom: 1px solid white;
+                # outline: none;
+                # width: 100%;
+            }
+            [data-testid="baseButton-secondary"]:hover {
+                color: white;
+                background-color: #ff0000;
+                # border: solid;
+                # border-bottom: 1px solid white;
+                # outline: none;
+                # width: 100%;
+            }
+            [data-baseweb="select"]{
+                # color: red;
+                # background-color: transparent;
+                # font-size: 55px;
+                width: 50%;
+            }
+            [data-baseweb="input"]{
+                # color: red;
+                background-color: transparent;
+                # font-size: 55px;
+                width: 50%;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Display the text input
+    user_input = st.text_input("Search for a movie:",placeholder="Enter the movie name")
+    
+    if user_input or st.button("Search"):
         corrected_text_movie = movie_finder(user_input, movies_list.tolist())
         st.info(f"Corrected Movie Input: {corrected_text_movie}")
 
@@ -125,40 +156,60 @@ def app():
         if st.button("Show Similar Movies"):
             recommend_movie, similarity_score, recommend_poster, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director = recommend(corrected_text_movie)
             # recommend_movie, similarity_score, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director = recommend(corrected_movie)
+            # recommend_movie, similarity_score, recommend_poster, recommend_trailer, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director = recommend(corrected_text_movie)
+
 
             cols = st.columns(5)
-            modal = Modal(key="Demo Key",title="test")
             for i, col in enumerate(cols):
                 with col:
                     st.markdown(f"**{recommend_movie[i]}**")
                     st.image(recommend_poster[i], use_column_width=True)
+                    # st.markdown(f"[Watch Trailer]({recommend_trailer[i]})")
                     st.markdown(f"**Similarity-score:** {similarity_score[i]:.5f}")
 
-                    # Append unique identifier (index i) to the key
-                    button_key = f"Button_{i}"
-                    open_modal = st.button(label='Movie Description', key=button_key)
-                    if open_modal:
-                        modal.open()
-                        with modal:
-                            st.markdown('testtesttesttesttesttesttesttest')
-                    # Define a button to trigger the modal
-                    # Generate a unique key for the button based on the index
-                    # show_modal_button_key = f"Show_Modal_Button_{i}"
-                    # show_modal_button = st.button("Movie Description111", key=show_modal_button_key)
-                    # # show_modal_button = st.button("Movie Description111")
+                    with st.popover(f"Movie Description"):
+                        col1, col2 = st.columns([1, 1.2])  
 
-                    # # Check if the button is clicked
-                    # if show_modal_button:
-                    #     # Open a modal
-                    #     with st.modal():
-                    #         # st.write("This is a modal dialog.")
-                    #         # Add any content you want to display in the modal
-                    # # with st.expander(f"Movie Description"):
-                    #         st.markdown("**Tagline:** " + f"{recommend_tagline[i]}")
-                    #         st.markdown("**Genres:** " + f"{recommend_genres[i]}")
-                    #         st.markdown("**Overview:** " + f"{recommend_overview[i]}")
-                    #         st.markdown("**Cast:** " + f"{recommend_cast[i]}")
-                    #         st.markdown("**Director:** " + f"{recommend_director[i]}")
+                        with col1:
+                            st.image(recommend_poster[i], use_column_width=False)
+
+                        with col2:
+                            st.markdown("**Title:** "+f"{recommend_movie[i]}")
+                            st.markdown("**Tagline:** " + f"{recommend_tagline[i]}")
+                            st.markdown("**Genres:** " + f"{recommend_genres[i]}")
+                            st.markdown("**Overview:** " + f"{recommend_overview[i]}")
+                            st.markdown("**Cast:** " + f"{recommend_cast[i]}")
+                            st.markdown("**Director:** " + f"{recommend_director[i]}")
+
+    if st.button("Use Voice Input"):
+        voice_text = voice_to_text()
+        if voice_text:
+            st.write(f"You said: {voice_text}")
+            corrected_text_movie = movie_finder(voice_text, movies_list.tolist())
+            st.info(f"Corrected Movie Input: {corrected_text_movie}")
+
+            recommend_movie, similarity_score, recommend_poster, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director = recommend(corrected_text_movie)
+
+            cols = st.columns(5)
+            for i, col in enumerate(cols):
+                with col:
+                    st.markdown(f"**{recommend_movie[i]}**")
+                    st.image(recommend_poster[i], use_column_width=True)
+                    # st.markdown(f"[Watch Trailer]({recommend_trailer[i]})")
+                    st.markdown(f"**Similarity-score:** {similarity_score[i]:.5f}")
+
+                    with st.popover(f"Movie Description"):
+                        col1, col2 = st.columns([1, 1.2])
+                        with col1:
+                            st.image(recommend_poster[i], use_column_width=False)
+                        with col2:
+                            st.markdown("**Title:** " + f"{recommend_movie[i]}")
+                            st.markdown("**Tagline:** " + f"{recommend_tagline[i]}")
+                            st.markdown("**Genres:** " + f"{recommend_genres[i]}")
+                            st.markdown("**Overview:** " + f"{recommend_overview[i]}")
+                            st.markdown("**Cast:** " + f"{recommend_cast[i]}")
+                            st.markdown("**Director:** " + f"{recommend_director[i]}")
+
 
 
     selectvalue=st.selectbox("Select movie from dropdown", movies_list)
@@ -177,12 +228,22 @@ def app():
                 st.markdown(f"**Similarity-score:** {movie_similarity[i]:.5f}")
                 # st.video(movie_trailer[i])
 
-                with st.expander(f"Movie Description"):
-                    st.markdown("**Tagline:** "+f"{movie_tagline[i]}")
-                    st.markdown("**Genres:** "+f"{movie_genres[i]}")
-                    st.markdown("**Overview:** "+f"{movie_overview[i]}")
-                    st.markdown("**Cast:** "+f"{movie_cast[i]}")
-                    st.markdown("**Director:** "+f"{movie_director[i]}")
+                with st.popover(f"Movie Description"):
+                    col1, col2 = st.columns([1, 1.2])  
+
+                    with col1:
+                        st.image(movie_poster[i], use_column_width=False)
+
+                    with col2:
+                        st.markdown("**Title:** "+f"{movie_name[i]}")
+                        st.markdown("**Tagline:** "+f"{movie_tagline[i]}")
+                        st.markdown("**Genres:** "+f"{movie_genres[i]}")
+                        st.markdown("**Overview:** "+f"{movie_overview[i]}")
+                        st.markdown("**Cast:** "+f"{movie_cast[i]}")
+                        st.markdown("**Director:** "+f"{movie_director[i]}")
+
+
+    
 
         # if st.session_state.search_history and selectvalue not in st.session_state.search_history:
         #     st.session_state.search_history.append(selectvalue)
@@ -246,13 +307,30 @@ def app():
                     # st.markdown(f"**Similarity-score:** {movie_similarity:.5f}")
                     # st.video(movie_trailer)
 
-                    with st.expander(f"Movie Description"):
-                        st.markdown("**Tagline:** "+f"{movie['tagline']}")
-                        st.markdown("**Genres:** "+f"{movie['genres']}")
-                        st.markdown("**Overview:** "+f"{movie['overview']}")
-                        st.markdown("**Cast:** "+f"{movie['cast']}")
-                        st.markdown("**Director:** "+f"{movie['director']}")
-        
+                    # with st.popover(f"Movie Description"):
+                    #     st.image(movie_poster, use_column_width=False)
+                    #     st.markdown("**Title:** "+f"{movie_name}")
+                    #     st.markdown("**Tagline:** "+f"{movie['tagline']}")
+                    #     st.markdown("**Genres:** "+f"{movie['genres']}")
+                    #     st.markdown("**Overview:** "+f"{movie['overview']}")
+                    #     st.markdown("**Cast:** "+f"{movie['cast']}")
+                    #     st.markdown("**Director:** "+f"{movie['director']}")
+
+                    with st.popover("Movie Description"):
+                        col1, col2 = st.columns([1, 1.2])  
+
+                        with col1:
+                            st.image(movie_poster, use_column_width=False)
+
+                        with col2:
+                            st.markdown("**Title:** " + f"{movie_name}")
+                            st.markdown("**Tagline:** " + f"{movie['tagline']}")
+                            st.markdown("**Genres:** " + f"{movie['genres']}")
+                            st.markdown("**Overview:** " + f"{movie['overview']}")
+                            st.markdown("**Cast:** " + f"{movie['cast']}")
+                            st.markdown("**Director:** " + f"{movie['director']}")
+
+
     # Create a dictionary where keys are actors and values are lists of movie titles with that actor
     cast_movies = {}
 
@@ -265,7 +343,23 @@ def app():
                 cast_movies.setdefault(actor, []).append(row['title'])
 
     # Select an actor from the list
-    selected_actor = st.selectbox("Select an actor", ['All'] + list(cast_movies.keys()))
+    # Define the HTML string with custom CSS for increasing text size
+    selectbox_html = f"""
+        <style>
+            /* Increase font size of selectbox label */
+            .st-bn > div > div > div > div > label > span {{
+                font-size: larger !important;
+            }}
+            /* Increase font size of selectbox options */
+            .st-eb > div > div > div > div > div > div > div {{
+                font-size: larger !important;
+            }}
+        </style>
+    """
+
+    # Write the HTML to the Streamlit app
+    st.write(selectbox_html, unsafe_allow_html=True)
+    selected_actor = st.selectbox("Select cast name", ['All'] + list(cast_movies.keys()))
 
     # Add a button to show the results
     show_results = st.button("Show Cast Movies")
@@ -296,11 +390,18 @@ def app():
                     st.image(movie_poster, use_column_width=True)
                     st.markdown(f"**Popularity:** {popularity:.2f}")
 
-                    with st.expander(f"Movie Description"):
-                        st.markdown("**Tagline:** " + f"{movie['tagline']}")
-                        st.markdown("**Genres:** " + f"{movie['genres']}")
-                        st.markdown("**Overview:** " + f"{movie['overview']}")
-                        st.markdown("**Cast:** " + f"{movie['cast']}")
-                        st.markdown("**Director:** " + f"{movie['director']}")
+                    with st.popover(f"Movie Description"):
+                        col1, col2 = st.columns([1, 1.2])  
+
+                        with col1:
+                            st.image(movie_poster, use_column_width=False)
+
+                        with col2:
+                            st.markdown("**Title:** "+f"{movie_name}")
+                            st.markdown("**Tagline:** " + f"{movie['tagline']}")
+                            st.markdown("**Genres:** " + f"{movie['genres']}")
+                            st.markdown("**Overview:** " + f"{movie['overview']}")
+                            st.markdown("**Cast:** " + f"{movie['cast']}")
+                            st.markdown("**Director:** " + f"{movie['director']}")
 
 
