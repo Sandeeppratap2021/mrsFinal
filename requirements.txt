@@ -5,3 +5,4 @@ Streamlit_option_menu
 fuzzywuzzy
 Python-Levenshtein
 speechRecognition
+firebase_admin
