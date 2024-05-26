@@ -2,6 +2,8 @@ import streamlit as st
 from streamlit_option_menu import option_menu
 import home, account, movies, contact, about
 
+# Set the page configuration to enable wide mode
+st.set_page_config(layout="wide")
 
 def set_bg_hack_url():
     
