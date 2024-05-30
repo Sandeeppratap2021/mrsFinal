@@ -1,6 +1,9 @@
-Requests==2.31.0
-streamlit==1.26.0
+Requests
+streamlit
 streamlit_authenticator==0.1.5
 Streamlit_option_menu
 fuzzywuzzy
 Python-Levenshtein
+speechRecognition
+firebase_admin
+streamlit_lottie

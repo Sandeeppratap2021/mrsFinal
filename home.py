@@ -4,7 +4,8 @@ import pickle
 import requests
 from fuzzywuzzy import process
 import speech_recognition as sr
-
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
 
 def movie_finder(title, all_titles):
         closest_match = process.extractOne(title, all_titles)
@@ -27,6 +28,51 @@ def fetch_poster(title):
             return poster_url
         else:
             return None
+
+def fetch_movie_details(title):
+    api_key = "993d52f7"  # Replace with your OMDb API key
+    base_url = "http://www.omdbapi.com/"
+
+    params = {
+        't': title,
+        'apikey': api_key,
+    }
+
+    response = requests.get(base_url, params=params)
+    data = response.json()
+
+    if 'Response' in data and data['Response'] == 'True':
+        movie_details = {
+            'Title': data.get('Title', 'N/A'),
+            'Year': data.get('Year', 'N/A'),
+            'Rated': data.get('Rated', 'N/A'),
+            'Released': data.get('Released', 'N/A'),
+            'Runtime': data.get('Runtime', 'N/A'),
+            'Genre': data.get('Genre', 'N/A'),
+            'Director': data.get('Director', 'N/A'),
+            'Writer': data.get('Writer', 'N/A'),
+            'Actors': data.get('Actors', 'N/A'),
+            'Plot': data.get('Plot', 'N/A'),
+            'Language': data.get('Language', 'N/A'),
+            'Country': data.get('Country', 'N/A'),
+            'Awards': data.get('Awards', 'N/A'),
+            'Poster': data.get('Poster', 'N/A'),
+            'Ratings': data.get('Ratings', 'N/A'),
+            'Metascore': data.get('Metascore', 'N/A'),
+            'imdbRating': data.get('imdbRating', 'N/A'),
+            'imdbVotes': data.get('imdbVotes', 'N/A'),
+            'imdbID': data.get('imdbID', 'N/A'),
+            'Type': data.get('Type', 'N/A'),
+            'DVD': data.get('DVD', 'N/A'),
+            'BoxOffice': data.get('BoxOffice', 'N/A'),
+            'Production': data.get('Production', 'N/A'),
+            'Website': data.get('Website', 'N/A')
+        }
+        return movie_details
+    else:
+        return None
+
+
 
 def fetch_trailer(title):
         # Construct the URL to fetch movie details
@@ -68,6 +114,216 @@ def voice_to_text():
             st.error("Sorry, the service is unavailable.")
         return ""
 
+def recommend_content(movie):
+    
+    a_1 = np.array(latent_matrix_1_df.loc[movie]).reshape(1, -1)
+    a_2 = np.array(latent_matrix_2_df.loc[movie]).reshape(1, -1)
+
+    # Calculate the similarity of this movie with the others in the list
+    score_1 = cosine_similarity(latent_matrix_1_df, a_1).reshape(-1)
+    score_2 = cosine_similarity(latent_matrix_2_df, a_2).reshape(-1)
+
+    # Average measure of both content and collaborative
+    hybrid = ((score_1 + score_2) / 2.0)
+
+    # Form a data frame of similar movies
+    dictDf = {'content': score_1, 'collaborative': score_2, 'hybrid': hybrid}
+    similar = pd.DataFrame(dictDf, index=latent_matrix_1_df.index)
+    similar.reset_index(inplace=True)
+    similar.rename(columns={'index': 'title'}, inplace=True)
+
+    # # Add a column for numeric indices
+    
+
+    # Sort by hybrid score
+    similar.sort_values('content', ascending=False, inplace=True)
+    # similar['numeric_index'] = range(len(similar))
+    # similar.reset_index(inplace=True)
+    similar.reset_index(drop=True, inplace=True)
+
+    print(similar)
+    print(similar.iloc[1738]['title'])
+
+    
+
+    
+
+    # index=movies[movies['title']==movie].index[0]
+    # distance = sorted(list(enumerate(similar['hybrid'])), reverse=True, key=lambda vector:vector[1])
+    recommend_movie=[]
+    similarity_score=[]
+    recommend_poster=[]
+    recommend_details=[]
+    # recommend_trailer=[]
+    recommend_genres=[]
+    recommend_tagline=[]
+    recommend_overview=[]
+    recommend_cast=[]
+    recommend_director=[]
+
+    for i in range(1,6):
+        # movies_id=movies.iloc[i[0]].numeric_index
+        recommend_movie.append(similar.iloc[i].title)
+        print(recommend_movie)
+        print("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
+
+        similarity_score.append(similar.iloc[i].content)
+        # recommend_poster.append(fetch_poster(similar.iloc[i].title))
+        poster = fetch_poster(similar.iloc[i].title)
+        recommend_poster.append(poster if poster else "default_poster.jpg")  # Add a default image if None
+        recommend_details.append(fetch_movie_details(similar.iloc[i].title))
+
+        # # recommend_trailer.append(fetch_trailer(movies.iloc[i[0]].title))
+        # recommend_genres.append(movies[movies['title'] == similar.iloc[i].title].genres.iloc[0])
+        # recommend_tagline.append(movies.iloc[i[0]].tagline)
+        # recommend_overview.append(movies.iloc[i[0]].overview)
+        # recommend_cast.append(movies.iloc[i[0]].cast)
+        # recommend_director.append(movies.iloc[i[0]].director)
+
+    # return recommend_movie, similarity_score,  recommend_poster, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
+    return recommend_movie, similarity_score,  recommend_poster, recommend_details
+
+    # return recommend_movie, similarity_score,  recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
+    # return recommend_movie, similarity_score,  recommend_poster, recommend_trailer, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
+
+def recommend_collab(movie):
+    
+    a_1 = np.array(latent_matrix_1_df.loc[movie]).reshape(1, -1)
+    a_2 = np.array(latent_matrix_2_df.loc[movie]).reshape(1, -1)
+
+    # Calculate the similarity of this movie with the others in the list
+    score_1 = cosine_similarity(latent_matrix_1_df, a_1).reshape(-1)
+    score_2 = cosine_similarity(latent_matrix_2_df, a_2).reshape(-1)
+
+    # Average measure of both content and collaborative
+    hybrid = ((score_1 + score_2) / 2.0)
+
+    # Form a data frame of similar movies
+    dictDf = {'content': score_1, 'collaborative': score_2, 'hybrid': hybrid}
+    similar = pd.DataFrame(dictDf, index=latent_matrix_1_df.index)
+    similar.reset_index(inplace=True)
+    similar.rename(columns={'index': 'title'}, inplace=True)
+
+    # # Add a column for numeric indices
+    
+
+    # Sort by hybrid score
+    similar.sort_values('collaborative', ascending=False, inplace=True)
+    # similar['numeric_index'] = range(len(similar))
+    # similar.reset_index(inplace=True)
+    similar.reset_index(drop=True, inplace=True)
+
+    print(similar)
+    print(similar.iloc[1738]['title'])
+
+    
+
+    
+
+    # index=movies[movies['title']==movie].index[0]
+    # distance = sorted(list(enumerate(similar['hybrid'])), reverse=True, key=lambda vector:vector[1])
+    recommend_movie=[]
+    similarity_score=[]
+    recommend_poster=[]
+    recommend_details=[]
+    # recommend_trailer=[]
+    recommend_genres=[]
+    recommend_tagline=[]
+    recommend_overview=[]
+    recommend_cast=[]
+    recommend_director=[]
+
+    for i in range(1,6):
+        # movies_id=movies.iloc[i[0]].numeric_index
+        recommend_movie.append(similar.iloc[i].title)
+        print(recommend_movie)
+        print("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
+
+        similarity_score.append(similar.iloc[i].collaborative)
+        # recommend_poster.append(fetch_poster(similar.iloc[i].title))
+        poster = fetch_poster(similar.iloc[i].title)
+        recommend_poster.append(poster if poster else "default_poster.jpg")  # Add a default image if None
+        recommend_details.append(fetch_movie_details(similar.iloc[i].title))
+
+        # # recommend_trailer.append(fetch_trailer(movies.iloc[i[0]].title))
+        # recommend_genres.append(movies[movies['title'] == similar.iloc[i].title].genres.iloc[0])
+        # recommend_tagline.append(movies.iloc[i[0]].tagline)
+        # recommend_overview.append(movies.iloc[i[0]].overview)
+        # recommend_cast.append(movies.iloc[i[0]].cast)
+        # recommend_director.append(movies.iloc[i[0]].director)
+
+    # return recommend_movie, similarity_score,  recommend_poster, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
+    return recommend_movie, similarity_score,  recommend_poster, recommend_details
+
+    # return recommend_movie, similarity_score,  recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
+    # return recommend_movie, similarity_score,  recommend_poster, recommend_trailer, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
+
+def recommend_hybrid(movie):
+    
+    a_1 = np.array(latent_matrix_1_df.loc[movie]).reshape(1, -1)
+    a_2 = np.array(latent_matrix_2_df.loc[movie]).reshape(1, -1)
+
+    # Calculate the similarity of this movie with the others in the list
+    score_1 = cosine_similarity(latent_matrix_1_df, a_1).reshape(-1)
+    score_2 = cosine_similarity(latent_matrix_2_df, a_2).reshape(-1)
+
+    # Average measure of both content and collaborative
+    hybrid = ((score_1 + score_2) / 2.0)
+
+    # Form a data frame of similar movies
+    dictDf = {'content': score_1, 'collaborative': score_2, 'hybrid': hybrid}
+    similar = pd.DataFrame(dictDf, index=latent_matrix_1_df.index)
+    similar.reset_index(inplace=True)
+    similar.rename(columns={'index': 'title'}, inplace=True)
+
+    # # Add a column for numeric indices
+    
+
+    # Sort by hybrid score
+    similar.sort_values('hybrid', ascending=False, inplace=True)
+    # similar['numeric_index'] = range(len(similar))
+    # similar.reset_index(inplace=True)
+    similar.reset_index(drop=True, inplace=True)
+
+    print(similar)
+    print(similar.iloc[1738]['title'])
+
+    
+
+    
+
+    # index=movies[movies['title']==movie].index[0]
+    # distance = sorted(list(enumerate(similar['hybrid'])), reverse=True, key=lambda vector:vector[1])
+    recommend_movie=[]
+    similarity_score=[]
+    recommend_poster=[]
+    recommend_details=[]
+    # recommend_trailer=[]
+    recommend_genres=[]
+    recommend_tagline=[]
+    recommend_overview=[]
+    recommend_cast=[]
+    recommend_director=[]
+
+    for i in range(1,6):
+        
+        recommend_movie.append(similar.iloc[i].title)
+        print(recommend_movie)
+        print("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
+
+        similarity_score.append(similar.iloc[i].hybrid)
+        # recommend_poster.append(fetch_poster(similar.iloc[i].title))
+        poster = fetch_poster(similar.iloc[i].title)
+        recommend_poster.append(poster if poster else "default_poster.jpg")  # Add a default image if None
+        recommend_details.append(fetch_movie_details(similar.iloc[i].title))
+
+
+    # return recommend_movie, similarity_score,  recommend_poster, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
+    return recommend_movie, similarity_score,  recommend_poster, recommend_details
+
+    # return recommend_movie, similarity_score,  recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
+    # return recommend_movie, similarity_score,  recommend_poster, recommend_trailer, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
+
 
 def recommend(movie):
     index=movies[movies['title']==movie].index[0]
@@ -102,6 +358,12 @@ def recommend(movie):
 movies = pd.read_pickle("movies_list.pkl")
 similarity = pickle.load(open("similarity.pkl", 'rb'))
 movies_list=movies['title'].values
+
+movies_hybrid = pd.read_pickle("movies_list_hybrid.pkl")
+latent_matrix_1_df =pickle.load(open("latent_matrix_1_df.pkl", 'rb'))
+latent_matrix_2_df =pickle.load(open("latent_matrix_2_df.pkl", 'rb'))
+movies_list_hybrid=movies_hybrid['title'].values
+
 
 def app():
 
@@ -242,6 +504,145 @@ def app():
                         st.markdown("**Cast:** "+f"{movie_cast[i]}")
                         st.markdown("**Director:** "+f"{movie_director[i]}")
 
+    selectvalue_hybrid=st.selectbox("Select movie from dropdown", movies_list_hybrid)
+
+    if st.button("Show Content Recommendation"):
+        # movie_name, movie_similarity, movie_poster, movie_genres, movie_tagline, movie_overview, movie_cast, movie_director = recommend(selectvalue)
+        movie_name, movie_similarity, movie_poster,  movie_details = recommend_content(selectvalue_hybrid)
+
+        # movie_name, movie_similarity, movie_genres, movie_tagline, movie_overview, movie_cast, movie_director = recommend(selectvalue)
+
+        cols=st.columns(5)
+
+        for i, col in enumerate(cols):
+
+            with col:    
+                st.markdown(f"**{movie_name[i]}**")
+                st.image(movie_poster[i], use_column_width=True)
+                st.markdown(f"**Similarity-score:** {movie_similarity[i]:.5f}")
+                # st.video(movie_trailer[i])
+
+                with st.popover(f"Movie Description"):
+                    col1, col2 = st.columns([1, 1.2])  
+
+                    with col1:
+                        st.image(movie_poster[i], use_column_width=False)
+
+                    with col2:
+                        st.markdown("**Title:** "+f"{movie_name[i]}")
+                        # st.markdown("**Tagline:** "+f"{movie_tagline[i]}")
+                        # st.markdown("**Genres:** "+f"{movie_genres[i]}")
+                        # st.markdown("**Overview:** "+f"{movie_overview[i]}")
+                        # st.markdown("**Cast:** "+f"{movie_cast[i]}")
+                        # st.markdown("**Director:** "+f"{movie_director[i]}")
+                        # Check if recommend_details[i] is not None before accessing its attributes
+                        if movie_details[i] is not None:
+                            st.markdown("**Year:** " + f"{movie_details[i].get('Year', 'N/A')}")
+                            st.markdown("**Rated:** " + f"{movie_details[i].get('Rated', 'N/A')}")
+                            st.markdown("**Released:** " + f"{movie_details[i].get('Released', 'N/A')}")
+                            st.markdown("**Runtime:** " + f"{movie_details[i].get('Runtime', 'N/A')}")
+                            st.markdown("**Awards:** " + f"{movie_details[i].get('Awards', 'N/A')}")
+                            st.markdown("**imdbRating:** " + f"{movie_details[i].get('imdbRating', 'N/A')}")
+                        else:
+                            # If recommend_details[i] is None, display placeholders
+                            st.markdown("**Year:** N/A")
+                            st.markdown("**Rated:** N/A")
+                            st.markdown("**Released:** N/A")
+                            st.markdown("**Runtime:** N/A")
+                            st.markdown("**Awards:** N/A")
+                            st.markdown("**imdbRating:** N/A")
+
+    if st.button("Show Collaborative Recommendation"):
+            # movie_name, movie_similarity, movie_poster, movie_genres, movie_tagline, movie_overview, movie_cast, movie_director = recommend(selectvalue)
+            movie_name, movie_similarity, movie_poster,  movie_details = recommend_collab(selectvalue_hybrid)
+
+            # movie_name, movie_similarity, movie_genres, movie_tagline, movie_overview, movie_cast, movie_director = recommend(selectvalue)
+
+            cols=st.columns(5)
+
+            for i, col in enumerate(cols):
+
+                with col:    
+                    st.markdown(f"**{movie_name[i]}**")
+                    st.image(movie_poster[i], use_column_width=True)
+                    st.markdown(f"**Similarity-score:** {movie_similarity[i]:.5f}")
+                    # st.video(movie_trailer[i])
+
+                    with st.popover(f"Movie Description"):
+                        col1, col2 = st.columns([1, 1.2])  
+
+                        with col1:
+                            st.image(movie_poster[i], use_column_width=False)
+
+                        with col2:
+                            st.markdown("**Title:** "+f"{movie_name[i]}")
+                            # st.markdown("**Tagline:** "+f"{movie_tagline[i]}")
+                            # st.markdown("**Genres:** "+f"{movie_genres[i]}")
+                            # st.markdown("**Overview:** "+f"{movie_overview[i]}")
+                            # st.markdown("**Cast:** "+f"{movie_cast[i]}")
+                            # st.markdown("**Director:** "+f"{movie_director[i]}")
+                            # Check if recommend_details[i] is not None before accessing its attributes
+                            if movie_details[i] is not None:
+                                st.markdown("**Year:** " + f"{movie_details[i].get('Year', 'N/A')}")
+                                st.markdown("**Rated:** " + f"{movie_details[i].get('Rated', 'N/A')}")
+                                st.markdown("**Released:** " + f"{movie_details[i].get('Released', 'N/A')}")
+                                st.markdown("**Runtime:** " + f"{movie_details[i].get('Runtime', 'N/A')}")
+                                st.markdown("**Awards:** " + f"{movie_details[i].get('Awards', 'N/A')}")
+                                st.markdown("**imdbRating:** " + f"{movie_details[i].get('imdbRating', 'N/A')}")
+                            else:
+                                # If recommend_details[i] is None, display placeholders
+                                st.markdown("**Year:** N/A")
+                                st.markdown("**Rated:** N/A")
+                                st.markdown("**Released:** N/A")
+                                st.markdown("**Runtime:** N/A")
+                                st.markdown("**Awards:** N/A")
+                                st.markdown("**imdbRating:** N/A")
+
+    if st.button("Show Hybrid Recommendation"):
+            # movie_name, movie_similarity, movie_poster, movie_genres, movie_tagline, movie_overview, movie_cast, movie_director = recommend(selectvalue)
+            movie_name, movie_similarity, movie_poster,  movie_details = recommend_hybrid(selectvalue_hybrid)
+
+            # movie_name, movie_similarity, movie_genres, movie_tagline, movie_overview, movie_cast, movie_director = recommend(selectvalue)
+
+            cols=st.columns(5)
+
+            for i, col in enumerate(cols):
+
+                with col:    
+                    st.markdown(f"**{movie_name[i]}**")
+                    st.image(movie_poster[i], use_column_width=True)
+                    st.markdown(f"**Similarity-score:** {movie_similarity[i]:.5f}")
+                    # st.video(movie_trailer[i])
+
+                    with st.popover(f"Movie Description"):
+                        col1, col2 = st.columns([1, 1.2])  
+
+                        with col1:
+                            st.image(movie_poster[i], use_column_width=False)
+
+                        with col2:
+                            st.markdown("**Title:** "+f"{movie_name[i]}")
+                            # st.markdown("**Tagline:** "+f"{movie_tagline[i]}")
+                            # st.markdown("**Genres:** "+f"{movie_genres[i]}")
+                            # st.markdown("**Overview:** "+f"{movie_overview[i]}")
+                            # st.markdown("**Cast:** "+f"{movie_cast[i]}")
+                            # st.markdown("**Director:** "+f"{movie_director[i]}")
+                            # Check if recommend_details[i] is not None before accessing its attributes
+                            if movie_details[i] is not None:
+                                st.markdown("**Year:** " + f"{movie_details[i].get('Year', 'N/A')}")
+                                st.markdown("**Rated:** " + f"{movie_details[i].get('Rated', 'N/A')}")
+                                st.markdown("**Released:** " + f"{movie_details[i].get('Released', 'N/A')}")
+                                st.markdown("**Runtime:** " + f"{movie_details[i].get('Runtime', 'N/A')}")
+                                st.markdown("**Awards:** " + f"{movie_details[i].get('Awards', 'N/A')}")
+                                st.markdown("**imdbRating:** " + f"{movie_details[i].get('imdbRating', 'N/A')}")
+                            else:
+                                # If recommend_details[i] is None, display placeholders
+                                st.markdown("**Year:** N/A")
+                                st.markdown("**Rated:** N/A")
+                                st.markdown("**Released:** N/A")
+                                st.markdown("**Runtime:** N/A")
+                                st.markdown("**Awards:** N/A")
+                                st.markdown("**imdbRating:** N/A")
 
     
 
