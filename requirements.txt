@@ -7,3 +7,5 @@ Python-Levenshtein
 speechRecognition
 firebase_admin
 streamlit_lottie
+numpy
+scikit-learn
