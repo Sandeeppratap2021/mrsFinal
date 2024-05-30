@@ -1,3 +1,4 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:3325a6ce4da7876a9b7348b8c50ab782e6ac932ab2103db5bf38cbd33d7e247e
-size 76
+[theme]
+base="light"
+secondaryBackgroundColor="#ffffff"
+textColor="#000000"
