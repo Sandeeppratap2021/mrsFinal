@@ -10,3 +10,4 @@ streamlit_lottie
 numpy
 scikit-learn
 pyaudio
+portaudio
