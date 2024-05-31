@@ -9,3 +9,4 @@ firebase_admin
 streamlit_lottie
 numpy
 scikit-learn
+pyaudio
