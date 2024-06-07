@@ -12,8 +12,6 @@ def set_bg_hack_url():
          <style>
          [data-testid="stAppViewContainer"]{{
             background: url("https://wallpapergod.com/images/hd/movie-1920X1080-wallpaper-eeotwqkmypkvalg9.jpeg");
-            # background: url("https://wallpapergod.com/images/hd/movie-1920X1080-wallpaper-z0puq43u0qbtr6j2.jpeg");
-
             background-size: cover
          }}
          </style>
@@ -55,17 +53,11 @@ class MultiApp:
         orientation="horizontal",
         default_index=0,
         styles={
-            # "nav-link": { "--hover-color": "pink"},
-            # "container": {"background-color": "#ffffff", "color": "#ff0000"},
-            # "use_padding": False
             "container": {"padding": "0!important", "margin":"0px","background-color": "#fafafa"},
-            # "icon": {"color": "orange", "font-size": "25px"}, 
             "nav-link": {"font-size": "25px", "text-align": "left", "margin":"0px", "--hover-color": "pink"},
-            # "nav-link-selected": {"background-color": "green"},
             }
         )
 
-        
         if app =="Home":
             home.app()
         if app =="Account":
@@ -77,7 +69,6 @@ class MultiApp:
         if app =="About Us":
             about.app()
 
-
         footer_container = st.container()
 
         with footer_container:
@@ -86,11 +77,6 @@ class MultiApp:
             with col1:
                 st.header("Contact info")
 
-                # css_example ='''
-                # <i class="fa-solid fa-envelope"></i> suryamrs2024@gmail.com 
-                # <i class="fa-solid fa-phone"></i> +91 73200 XXXXX
-                # <i class="fa-solid fa-location-dot"></i> Kolkata, West Bengal
-                # '''
                 st.markdown("""
                 <div>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="24" height="24" fill="#ffffff"><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M48 64C21.5 64 0 85.5 0 112c0 15.1 7.1 29.3 19.2 38.4L236.8 313.6c11.4 8.5 27 8.5 38.4 0L492.8 150.4c12.1-9.1 19.2-23.3 19.2-38.4c0-26.5-21.5-48-48-48H48zM0 176V384c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V176L294.4 339.2c-22.8 17.1-54 17.1-76.8 0L0 176z"/></svg>
@@ -113,14 +99,11 @@ class MultiApp:
                 st.markdown(' <a style="color: #00ff00; text-decoration:none; " href="https://www.google.com" target="_blank"> Terms and Conditions </a>', unsafe_allow_html=True)
 
             with col3:
-
                 st.header("Social Media")
-
                 st.markdown("""
                     <style>
                         .icon-link {
                             color: #ffffff;
-
                             text-decoration: none;
                             display: inline-block;
                             margin-right: 10px;
@@ -148,8 +131,5 @@ class MultiApp:
                         </svg>
                     </a>
                     """, unsafe_allow_html=True)
-
-
-
 
     run()    

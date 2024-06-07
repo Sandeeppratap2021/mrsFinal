@@ -132,37 +132,20 @@ def recommend_content(movie):
     similar.reset_index(inplace=True)
     similar.rename(columns={'index': 'title'}, inplace=True)
 
-    # # Add a column for numeric indices
-    
-
     # Sort by hybrid score
     similar.sort_values('content', ascending=False, inplace=True)
-    # similar['numeric_index'] = range(len(similar))
-    # similar.reset_index(inplace=True)
     similar.reset_index(drop=True, inplace=True)
 
     print(similar)
     print(similar.iloc[1738]['title'])
 
-    
-
-    
-
-    # index=movies[movies['title']==movie].index[0]
-    # distance = sorted(list(enumerate(similar['hybrid'])), reverse=True, key=lambda vector:vector[1])
     recommend_movie=[]
     similarity_score=[]
     recommend_poster=[]
     recommend_details=[]
-    # recommend_trailer=[]
-    recommend_genres=[]
-    recommend_tagline=[]
-    recommend_overview=[]
-    recommend_cast=[]
-    recommend_director=[]
 
     for i in range(1,6):
-        # movies_id=movies.iloc[i[0]].numeric_index
+
         recommend_movie.append(similar.iloc[i].title)
         print(recommend_movie)
         print("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
@@ -173,18 +156,8 @@ def recommend_content(movie):
         recommend_poster.append(poster if poster else "default_poster.jpg")  # Add a default image if None
         recommend_details.append(fetch_movie_details(similar.iloc[i].title))
 
-        # # recommend_trailer.append(fetch_trailer(movies.iloc[i[0]].title))
-        # recommend_genres.append(movies[movies['title'] == similar.iloc[i].title].genres.iloc[0])
-        # recommend_tagline.append(movies.iloc[i[0]].tagline)
-        # recommend_overview.append(movies.iloc[i[0]].overview)
-        # recommend_cast.append(movies.iloc[i[0]].cast)
-        # recommend_director.append(movies.iloc[i[0]].director)
-
     # return recommend_movie, similarity_score,  recommend_poster, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
     return recommend_movie, similarity_score,  recommend_poster, recommend_details
-
-    # return recommend_movie, similarity_score,  recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
-    # return recommend_movie, similarity_score,  recommend_poster, recommend_trailer, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
 
 def recommend_collab(movie):
     
@@ -204,40 +177,23 @@ def recommend_collab(movie):
     similar.reset_index(inplace=True)
     similar.rename(columns={'index': 'title'}, inplace=True)
 
-    # # Add a column for numeric indices
-    
-
     # Sort by hybrid score
     similar.sort_values('collaborative', ascending=False, inplace=True)
-    # similar['numeric_index'] = range(len(similar))
-    # similar.reset_index(inplace=True)
     similar.reset_index(drop=True, inplace=True)
 
-    print(similar)
-    print(similar.iloc[1738]['title'])
+    # print(similar)
+    # print(similar.iloc[1738]['title'])
 
-    
-
-    
-
-    # index=movies[movies['title']==movie].index[0]
-    # distance = sorted(list(enumerate(similar['hybrid'])), reverse=True, key=lambda vector:vector[1])
     recommend_movie=[]
     similarity_score=[]
     recommend_poster=[]
     recommend_details=[]
-    # recommend_trailer=[]
-    recommend_genres=[]
-    recommend_tagline=[]
-    recommend_overview=[]
-    recommend_cast=[]
-    recommend_director=[]
 
     for i in range(1,6):
-        # movies_id=movies.iloc[i[0]].numeric_index
+
         recommend_movie.append(similar.iloc[i].title)
         print(recommend_movie)
-        print("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
+        # print("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
 
         similarity_score.append(similar.iloc[i].collaborative)
         # recommend_poster.append(fetch_poster(similar.iloc[i].title))
@@ -245,18 +201,9 @@ def recommend_collab(movie):
         recommend_poster.append(poster if poster else "default_poster.jpg")  # Add a default image if None
         recommend_details.append(fetch_movie_details(similar.iloc[i].title))
 
-        # # recommend_trailer.append(fetch_trailer(movies.iloc[i[0]].title))
-        # recommend_genres.append(movies[movies['title'] == similar.iloc[i].title].genres.iloc[0])
-        # recommend_tagline.append(movies.iloc[i[0]].tagline)
-        # recommend_overview.append(movies.iloc[i[0]].overview)
-        # recommend_cast.append(movies.iloc[i[0]].cast)
-        # recommend_director.append(movies.iloc[i[0]].director)
 
     # return recommend_movie, similarity_score,  recommend_poster, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
     return recommend_movie, similarity_score,  recommend_poster, recommend_details
-
-    # return recommend_movie, similarity_score,  recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
-    # return recommend_movie, similarity_score,  recommend_poster, recommend_trailer, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
 
 def recommend_hybrid(movie):
     
@@ -276,34 +223,17 @@ def recommend_hybrid(movie):
     similar.reset_index(inplace=True)
     similar.rename(columns={'index': 'title'}, inplace=True)
 
-    # # Add a column for numeric indices
-    
-
     # Sort by hybrid score
     similar.sort_values('hybrid', ascending=False, inplace=True)
-    # similar['numeric_index'] = range(len(similar))
-    # similar.reset_index(inplace=True)
     similar.reset_index(drop=True, inplace=True)
 
     print(similar)
     print(similar.iloc[1738]['title'])
 
-    
-
-    
-
-    # index=movies[movies['title']==movie].index[0]
-    # distance = sorted(list(enumerate(similar['hybrid'])), reverse=True, key=lambda vector:vector[1])
     recommend_movie=[]
     similarity_score=[]
     recommend_poster=[]
     recommend_details=[]
-    # recommend_trailer=[]
-    recommend_genres=[]
-    recommend_tagline=[]
-    recommend_overview=[]
-    recommend_cast=[]
-    recommend_director=[]
 
     for i in range(1,6):
         
@@ -320,10 +250,6 @@ def recommend_hybrid(movie):
 
     # return recommend_movie, similarity_score,  recommend_poster, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
     return recommend_movie, similarity_score,  recommend_poster, recommend_details
-
-    # return recommend_movie, similarity_score,  recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
-    # return recommend_movie, similarity_score,  recommend_poster, recommend_trailer, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director
-
 
 def recommend(movie):
     index=movies[movies['title']==movie].index[0]
@@ -417,9 +343,6 @@ def app():
         # Recommendation for the corrected movie
         if st.button("Show Similar Movies"):
             recommend_movie, similarity_score, recommend_poster, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director = recommend(corrected_text_movie)
-            # recommend_movie, similarity_score, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director = recommend(corrected_movie)
-            # recommend_movie, similarity_score, recommend_poster, recommend_trailer, recommend_genres, recommend_tagline, recommend_overview, recommend_cast, recommend_director = recommend(corrected_text_movie)
-
 
             cols = st.columns(5)
             for i, col in enumerate(cols):
